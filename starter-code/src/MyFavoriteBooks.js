@@ -8,6 +8,7 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Form from './Form';
 import UpdateBookForm from './UpdateBookForm';
+import Alert from 'react-bootstrap/Alert';
 
 class MyFavoriteBooks extends React.Component {
 
@@ -17,7 +18,8 @@ class MyFavoriteBooks extends React.Component {
       books: [],
       showBooks: false,
       showUpdateStatus: false,
-      index:0,
+      show: false,
+      index: 0,
       bookName: '',
       description: '',
       urlImg: '',
@@ -57,6 +59,24 @@ class MyFavoriteBooks extends React.Component {
 
 
 
+  showModel = () => {
+    this.setState({
+      show: true
+    })
+  }
+
+  handleClose1 = () => {
+    this.setState({
+      show: false
+    })
+  }
+
+  handleClose = () => {
+    this.setState({
+      showUpdateStatus: false,
+    })
+  }
+
   addBook = async (event) => {
     event.preventDefault();
     const { user, isAuthenticated } = this.props.auth0;
@@ -88,39 +108,39 @@ class MyFavoriteBooks extends React.Component {
 
   }
 
-  updateBook = async (e) =>{
-     e.preventDefault();
+  updateBook = async (e) => {
+    e.preventDefault();
     // const { user } = this.props.auth0;
     const bookData = {
-      bookName:this.state.bookName,
-      description:this.state.description,
+      bookName: this.state.bookName,
+      description: this.state.description,
       urlImg: this.state.urlImg,
       ownerEmail: this.props.auth0.user.email,
     }
-    
+
     console.log('hi updatebook');
 
-    let booksData = await axios.put(`${this.state.server}/updatebook/${this.state.index}`,bookData)
+    let booksData = await axios.put(`${this.state.server}/updatebook/${this.state.index}`, bookData)
     this.setState({
       books: booksData.data
     })
   }
 
 
- showUpdateForm = (idx) => {
+  showUpdateForm = (idx) => {
 
-    const chosenBook = this.state.books.filter((val,index)=>{
+    const chosenBook = this.state.books.filter((val, index) => {
       return idx === index;
     })
 
-    console.log('hi',chosenBook);
+    console.log('hi', chosenBook);
 
     this.setState({
       showUpdateStatus: true,
-      index:idx,
+      index: idx,
       bookName: chosenBook[0].bookName,
-      description:chosenBook[0].description,
-      urlImg:chosenBook[0].urlImg,
+      description: chosenBook[0].description,
+      urlImg: chosenBook[0].urlImg,
     })
   }
 
@@ -130,29 +150,33 @@ class MyFavoriteBooks extends React.Component {
       <Jumbotron>
 
         <h1>My Favorite Books</h1>
+        <Button variant="outline-dark" onClick={this.showModel} size="lg" block>ADD BOOK</Button>
+        {this.state.show &&
+          <Form
+            updateBookNameProps={this.updateBookName}
+            updateBookDescriptionProps={this.updateDescription}
+            updateBookUrlImgProps={this.updateUrlImg}
+            addBookProps={this.addBook}
+            handleClose1={this.handleClose1}
+            show={this.state.show}
+          />
+        }
 
-
-        <Form
-          updateBookNameProps={this.updateBookName}
-          updateBookDescriptionProps={this.updateDescription}
-          updateBookUrlImgProps={this.updateUrlImg}
-          addBookProps={this.addBook}
-        />
-
-       {this.state.showUpdateStatus &&
-            <UpdateBookForm
-              bookName={this.state.bookName}
-              description={this.state.description}
-              urlImg={this.state.urlImg}
-              updateBookNameProps={this.updateBookName}
-              updateBookDescriptionProps={this.updateDescription}
-              updateBookUrlImgProps={this.updateUrlImg}
-              updateBook={this.updateBook}
-            />
-          }
-
-
-        <p>This is a collection of my favorite books</p>
+        {this.state.showUpdateStatus &&
+          <UpdateBookForm
+            bookName={this.state.bookName}
+            description={this.state.description}
+            urlImg={this.state.urlImg}
+            updateBookNameProps={this.updateBookName}
+            updateBookDescriptionProps={this.updateDescription}
+            updateBookUrlImgProps={this.updateUrlImg}
+            updateBook={this.updateBook}
+            showUpdateStatus={this.state.showUpdateStatus}
+            handleClose={this.handleClose}
+          />
+        }
+        <br/><br/>
+        <Alert variant="dark">This is a collection of my favorite books</Alert><br/><br/>
         <div>
           {this.state.showBooks &&
             this.state.books.map((item, idx) => {
@@ -164,7 +188,7 @@ class MyFavoriteBooks extends React.Component {
                     <Card.Title>{item.bookName}</Card.Title>
                     <Card.Text> {item.description}</Card.Text>
                     <Button variant="outline-danger" onClick={() => this.deleteBook(idx)}>Delete</Button>
-                    <Button variant="outline-success" onClick={()=>this.showUpdateForm(idx)}>Update</Button>
+                    <Button variant="outline-success" onClick={() => this.showUpdateForm(idx)}>Update</Button>
                   </Card.Body>
                 </Card>
 
