@@ -7,6 +7,7 @@ import { withAuth0 } from '@auth0/auth0-react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Form from './Form';
+import UpdateBookForm from './UpdateBookForm';
 
 class MyFavoriteBooks extends React.Component {
 
@@ -14,7 +15,13 @@ class MyFavoriteBooks extends React.Component {
     super(props);
     this.state = {
       books: [],
-      showBooks: false
+      showBooks: false,
+      showUpdateStatus: false,
+      index:0,
+      bookName: '',
+      description: '',
+      urlImg: '',
+      server: process.env.REACT_APP_SERVER_URL
     }
   }
 
@@ -23,11 +30,7 @@ class MyFavoriteBooks extends React.Component {
     console.log('books', books.data)
     this.setState({
       books: books.data,
-      showBooks: true,
-      bookName: '',
-      description: '',
-      urlImg: '',
-      server: process.env.REACT_APP_SERVER_URL
+      showBooks: true
     });
   }
 
@@ -56,10 +59,13 @@ class MyFavoriteBooks extends React.Component {
 
   addBook = async (event) => {
     event.preventDefault();
+    const { user, isAuthenticated } = this.props.auth0;
     const bookFormData = {
       bookName: this.state.bookName,
       description: this.state.description,
       urlImg: this.state.urlImg,
+      ownerEmail: user.email,
+
     }
     const newBooks = await axios.post(`${this.state.server}/addBook`, bookFormData)
 
@@ -82,6 +88,42 @@ class MyFavoriteBooks extends React.Component {
 
   }
 
+  updateBook = async (e) =>{
+     e.preventDefault();
+    // const { user } = this.props.auth0;
+    const bookData = {
+      bookName:this.state.bookName,
+      description:this.state.description,
+      urlImg: this.state.urlImg,
+      ownerEmail: this.props.auth0.user.email,
+    }
+    
+    console.log('hi updatebook');
+
+    let booksData = await axios.put(`${this.state.server}/updatebook/${this.state.index}`,bookData)
+    this.setState({
+      books: booksData.data
+    })
+  }
+
+
+ showUpdateForm = (idx) => {
+
+    const chosenBook = this.state.books.filter((val,index)=>{
+      return idx === index;
+    })
+
+    console.log('hi',chosenBook);
+
+    this.setState({
+      showUpdateStatus: true,
+      index:idx,
+      bookName: chosenBook[0].bookName,
+      description:chosenBook[0].description,
+      urlImg:chosenBook[0].urlImg,
+    })
+  }
+
 
   render() {
     return (
@@ -97,6 +139,19 @@ class MyFavoriteBooks extends React.Component {
           addBookProps={this.addBook}
         />
 
+       {this.state.showUpdateStatus &&
+            <UpdateBookForm
+              bookName={this.state.bookName}
+              description={this.state.description}
+              urlImg={this.state.urlImg}
+              updateBookNameProps={this.updateBookName}
+              updateBookDescriptionProps={this.updateDescription}
+              updateBookUrlImgProps={this.updateUrlImg}
+              updateBook={this.updateBook}
+            />
+          }
+
+
         <p>This is a collection of my favorite books</p>
         <div>
           {this.state.showBooks &&
@@ -107,10 +162,9 @@ class MyFavoriteBooks extends React.Component {
                   <Card.Img variant="top" src={item.urlImg} alt={item.urlImg} />
                   <Card.Body>
                     <Card.Title>{item.bookName}</Card.Title>
-                    <Card.Text>
-                      {item.description}
-                    </Card.Text>
-                    <Button variant="primary" onClick={() => this.props.deleteBook(idx)}>Go somewhere</Button>
+                    <Card.Text> {item.description}</Card.Text>
+                    <Button variant="outline-danger" onClick={() => this.deleteBook(idx)}>Delete</Button>
+                    <Button variant="outline-success" onClick={()=>this.showUpdateForm(idx)}>Update</Button>
                   </Card.Body>
                 </Card>
 
@@ -118,8 +172,6 @@ class MyFavoriteBooks extends React.Component {
             })}
 
         </div>
-
-
       </Jumbotron>
     )
   }
